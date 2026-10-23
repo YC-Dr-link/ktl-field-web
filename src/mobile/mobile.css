@@ -1,0 +1,6 @@
+/* 모바일 우선 (360px 기준). 한 손으로 누르기 좋게 버튼은 크게, 본문 16px · 값 24px 이상 */
+.m-screen { max-width: 520px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+.m-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: calc(12px + env(safe-area-inset-top)) 16px 12px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 18px; }
+.m-body { flex: 1; padding: 14px 14px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
+.m-body p { margin: 6px 0 0; }
