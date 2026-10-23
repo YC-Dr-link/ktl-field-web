@@ -5,13 +5,16 @@ import { useEffect, useState } from "react";
  *   /            MO-03 접수 건 목록
  *   /new         MO-03 새 건 → MO-04 분류
  *   /cases/:id   MO-05 촬영 체크리스트
+ *   /photos/:id  MO-06 판독 결과 확인
  * 서버(B-1)는 이 주소들로 바로 들어와도 index.html을 줘야 한다.
  */
-export type Route = { name: "list" } | { name: "new" } | { name: "case"; id: string };
+export type Route = { name: "list" } | { name: "new" } | { name: "case"; id: string } | { name: "photo"; id: string };
 
 export function parse(path: string): Route {
   const m = /^\/cases\/([^/]+)\/?$/.exec(path);
   if (m) return { name: "case", id: decodeURIComponent(m[1]) };
+  const ph = /^\/photos\/([^/]+)\/?$/.exec(path);
+  if (ph) return { name: "photo", id: decodeURIComponent(ph[1]) };
   if (path === "/new") return { name: "new" };
   return { name: "list" };
 }

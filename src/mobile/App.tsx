@@ -54,6 +54,13 @@ export default function App() {
     case "cases":
       if (route.name === "new") return <NewCase />;
       if (route.name === "case") return <CaseView id={route.id} />;
+      if (route.name === "photo")
+        return (
+          <div className="m-screen">
+            <header className="m-bar"><button className="btn ghost" onClick={() => history.back()}>‹</button><b>판독 결과</b><span /></header>
+            <main className="m-body"><div className="card muted">판독 결과 확인 · 수정 · 확정(MO-06)은 다음 작업에서 연결돼요.</div></main>
+          </div>
+        );
       return (
         <div className="m-screen">
           <header className="m-bar">

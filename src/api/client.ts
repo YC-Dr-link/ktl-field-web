@@ -7,6 +7,8 @@ import type { components, paths } from "./schema";
 export type Schemas = components["schemas"];
 export type CaseSummary = Schemas["CaseSummary"];
 export type Case = Schemas["Case"];
+export type Photo = Schemas["Photo"];
+export type Value = Schemas["Value"];
 export type Category = Schemas["Category"];
 export type Tester = Schemas["Tester"];
 export type Client = Schemas["Client"];
