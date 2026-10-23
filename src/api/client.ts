@@ -8,12 +8,14 @@ export type Schemas = components["schemas"];
 export type CaseSummary = Schemas["CaseSummary"];
 export type Category = Schemas["Category"];
 export type Tester = Schemas["Tester"];
+export type Client = Schemas["Client"];
 export type ApiErrorBody = Schemas["Error"];
 
 type Get<P extends keyof paths> = paths[P] extends { get: { responses: { 200: { content: { "application/json": infer R } } } } } ? R : never;
 export type CaseList = Get<"/cases">;
 export type CategoryList = Get<"/categories">;
 export type Me = Get<"/sessions/me">;
+export type TesterList = Get<"/testers">;
 
 /** 휴대폰 화면은 /api/v1, 관리 화면은 /api/admin/v1 (같은 경로 · 같은 형식) */
 export const API_BASE = import.meta.env.MODE === "admin" ? "/api/admin/v1" : "/api/v1";
