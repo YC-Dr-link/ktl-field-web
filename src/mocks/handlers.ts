@@ -10,7 +10,7 @@
 import { delay, http, HttpResponse } from "msw";
 import type { Case, CaseList, CategoryList, CaseSummary, Client, Me, Photo, TesterList } from "@/api/client";
 import { caseDetail, cases, categories, PINS, testers } from "./data";
-import { addPhoto, itemStatus, onEvent, photos } from "./photos";
+import { addPhoto, emitValues, itemStatus, onEvent, photos } from "./photos";
 import { load, save } from "./state";
 
 const BASES = ["/api/v1", "/api/admin/v1"];
@@ -148,6 +148,31 @@ export const handlers = [
   ...both("/photos/:id").map((p) => http.get(p, ({ params }) => {
     const ph = photos.get(String(params.id));
     if (!ph) return fail(404, "NOT_FOUND", "사진을 찾지 못했습니다.");
+    const { blob: _b, ...out } = ph;
+    void _b;
+    return HttpResponse.json<Photo>(out);
+  })),
+
+  ...both("/photos/:id/values").map((p) => http.patch(p, async ({ request, params }) => {
+    await delay(300);
+    const ph = photos.get(String(params.id));
+    if (!ph) return fail(404, "NOT_FOUND", "사진을 찾지 못했습니다.");
+    const b = (await request.json()) as { values?: { key: string; value: string; reason?: string }[]; confirm?: boolean };
+    const sent = new Map((b.values ?? []).map((v) => [v.key, v]));
+    const vals = ph.values ?? [];
+    if (b.confirm && vals.every((v) => v.status === "confirmed" || v.status === "edited")) return fail(409, "ALREADY_CONFIRMED", "이미 확정된 값입니다.");
+    for (const v of vals) {
+      const n = sent.get(v.key);
+      if (b.confirm && v.status === "needs_check" && !n) return fail(400, "VALIDATION", `${v.label} 값을 확인해 주세요.`);
+      if (n && n.value !== v.value && !n.reason?.trim()) return fail(400, "VALIDATION", `${v.label}: 값을 바꾸면 사유가 필요합니다.`);
+    }
+    const now = new Date().toISOString();
+    ph.values = vals.map((v) => {
+      const n = sent.get(v.key);
+      const edited = !!n && n.value !== v.value;
+      return { ...v, value: n?.value ?? v.value, status: b.confirm ? (edited ? "edited" : "confirmed") : edited ? "edited" : v.status, confirmed_by: b.confirm ? "ts_1" : v.confirmed_by, confirmed_at: b.confirm ? now : v.confirmed_at };
+    });
+    emitValues(ph.id ?? "", ph.case_id ?? "");
     const { blob: _b, ...out } = ph;
     void _b;
     return HttpResponse.json<Photo>(out);
