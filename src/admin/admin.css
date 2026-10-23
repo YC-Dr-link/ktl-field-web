@@ -1,0 +1,9 @@
+/* 노트북 화면 (1280px 이상 기준) */
+.a-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); min-height: 100vh; }
+.a-nav { display: flex; flex-direction: column; gap: 2px; padding: 18px 12px; background: var(--surface); border-right: 1px solid var(--line); }
+.a-logo { font-size: 18px; padding: 0 10px 14px; }
+.a-nav button { text-align: left; border: 0; background: transparent; padding: 10px; border-radius: 10px; color: var(--ink-2); cursor: pointer; }
+.a-nav button:hover { background: var(--bg); }
+.a-nav button.on { background: #e8f1fc; color: var(--accent); font-weight: 700; }
+.a-main { padding: 24px 32px; }
+.a-main h1 { margin: 0 0 16px; font-size: 24px; }
