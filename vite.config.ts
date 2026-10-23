@@ -1,3 +1,4 @@
+import { rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
@@ -17,7 +18,11 @@ export default defineConfig(({ mode }) => {
   const name = mode === "admin" ? "admin" : "mobile";
   const app = APPS[name];
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      // MSW 목업 워커는 개발 서버에서만 쓴다 — 빌드 결과(현장 배포)에서는 뺀다
+      { name: "drop-mock-worker", apply: "build", closeBundle: () => rmSync(resolve(__dirname, "dist", name, "mockServiceWorker.js"), { force: true }) },
+    ],
     root: resolve(__dirname, "src", name),
     publicDir: resolve(__dirname, "public"),
     envDir: __dirname,
