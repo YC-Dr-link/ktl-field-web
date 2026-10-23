@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, Me } from "@/api/client";
 import CaseList from "./CaseList";
+import CaseView from "./CaseView";
+import NewCase from "./NewCase";
+import { go, useRoute } from "./router";
 import Login from "./Login";
 import Pair from "./Pair";
 
@@ -9,6 +12,7 @@ type View = { name: "loading" } | { name: "pair"; notice?: string } | { name: "l
 /** 휴대폰 웹 흐름: 미등록 단말 → MO-01 등록 · 로그인 전 → MO-02 시험자 + PIN · 로그인됨 → MO-03 목록 */
 export default function App() {
   const [view, setView] = useState<View>({ name: "loading" });
+  const route = useRoute();
   const pairCode = new URLSearchParams(location.search).get("code") ?? "";
 
   const check = useCallback(() => {
@@ -48,6 +52,8 @@ export default function App() {
     case "login":
       return <Login onDone={check} />;
     case "cases":
+      if (route.name === "new") return <NewCase />;
+      if (route.name === "case") return <CaseView id={route.id} />;
       return (
         <div className="m-screen">
           <header className="m-bar">
@@ -58,7 +64,7 @@ export default function App() {
                 <button className="btn" onClick={logout}>로그아웃 (다른 시험자)</button>
               </div>
             </details>
-            <button className="btn primary" disabled title="다음 작업(MO-03 새 건)에서 연결">+ 새 건</button>
+            <button className="btn primary" onClick={() => go("/new")}>+ 새 건</button>
           </header>
           <main className="m-body">
             <CaseList />
