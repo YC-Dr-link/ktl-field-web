@@ -7,7 +7,12 @@ import type { CaseSummary, Category, Tester } from "@/api/client";
 export const testers: Tester[] = [
   { id: "ts_1", name: "시험자A", locked: false, active: true },
   { id: "ts_2", name: "시험자B", locked: false, active: true },
+  { id: "ts_3", name: "시험자C", locked: true, active: true },
+  { id: "ts_9", name: "퇴사자", locked: false, active: false },   // active=false는 목록에 안 나와야 한다
 ];
+
+/** 목업 PIN (가짜). 진짜 서버는 PIN을 돌려주지 않는다 */
+export const PINS: Record<string, string> = { ts_1: "1234", ts_2: "5678", ts_3: "0000" };
 
 // categories.yaml 요약 (시료채취 · 먼지). 전체 항목은 ktl-field-modules/categories.yaml
 export const categories: Category[] = [

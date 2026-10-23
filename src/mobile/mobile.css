@@ -15,3 +15,28 @@
 .err-box { border-color: var(--err); background: var(--err-bg); color: var(--err); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .err-box p { margin: 0; }
 .loading { text-align: center; padding: 28px 16px; }
+
+/* MO-01 · MO-02 */
+.m-lead { margin: 0; color: var(--ink-2); line-height: 1.5; }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 600; color: var(--ink-2); }
+.field input { height: 56px; font-size: 20px; padding: 0 14px; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); }
+.field input:focus { outline: none; border-color: var(--accent); }
+.field input.code { font-size: 30px; letter-spacing: .3em; text-align: center; font-variant-numeric: tabular-nums; }
+.btn.big { min-height: 58px; font-size: 19px; }
+.btn.ghost { background: transparent; border-color: transparent; }
+.small { font-size: 14px; }
+.ok-box { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); font-size: 20px; font-weight: 700; text-align: center; padding: 28px; }
+.tester-list { display: grid; gap: 10px; }
+.btn.tester { min-height: 64px; font-size: 22px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.pin-body { align-items: stretch; }
+.pin-dots { display: flex; justify-content: center; gap: 16px; padding: 18px 0 6px; }
+.pin-dots span { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--ink-2); }
+.pin-dots span.on { background: var(--ink); border-color: var(--ink); }
+.pin-msg { text-align: center; min-height: 24px; color: var(--ink-2); }
+.err-text { color: var(--err); font-weight: 600; }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.btn.key { min-height: 64px; font-size: 26px; }
+.who { position: relative; }
+.who summary { list-style: none; cursor: pointer; font-size: 18px; padding: 6px 0; }
+.who summary::-webkit-details-marker { display: none; }
+.who-menu { position: absolute; left: 0; top: 40px; z-index: 10; display: flex; flex-direction: column; gap: 8px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
