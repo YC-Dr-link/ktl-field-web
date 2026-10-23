@@ -7,3 +7,41 @@
 .a-nav button.on { background: #e8f1fc; color: var(--accent); font-weight: 700; }
 .a-main { padding: 24px 32px; }
 .a-main h1 { margin: 0 0 16px; font-size: 24px; }
+
+/* 공통 */
+.a-stack { display: flex; flex-direction: column; gap: 16px; max-width: 1100px; }
+.a-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.a-head h2 { margin: 0; font-size: 18px; }
+.a-head h2 .muted { font-size: 14px; font-weight: 500; margin-left: 6px; }
+.a-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+.a-table th { text-align: left; color: var(--muted); font-weight: 600; font-size: 13px; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.a-table td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.a-table tr.dim td { color: var(--muted); }
+.a-table .right { text-align: right; white-space: nowrap; }
+.a-inline { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.a-inline input, .a-form input, .a-form select { height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; font-size: 15px; background: var(--surface); }
+.a-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.a-form label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; color: var(--ink-2); font-weight: 600; }
+.a-form label.check { flex-direction: row; align-items: center; gap: 8px; }
+.a-actions { display: flex; gap: 10px; margin-top: 16px; }
+.btn.danger { background: var(--err); border-color: var(--err); color: #fff; }
+.ok-line { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); font-weight: 600; }
+.err-box { border-color: var(--err); background: var(--err-bg); color: var(--err); }
+.err-text { color: var(--err); font-weight: 600; }
+.small { font-size: 13px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; width: fit-content; }
+.seg button { border: 0; background: var(--surface); padding: 9px 14px; cursor: pointer; font-size: 14px; }
+.seg button.on { background: #e8f1fc; color: var(--accent); font-weight: 700; }
+a.btn { display: inline-flex; align-items: center; text-decoration: none; }
+
+/* AD-05 등록 코드 */
+.pair { display: flex; align-items: center; gap: 24px; }
+.pair-qr { width: 200px; height: 200px; flex: none; }
+.pair-qr svg { width: 100%; height: 100%; }
+.pair-code { font-size: 48px; font-weight: 800; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.pair.expired .pair-qr, .pair.expired .pair-code { opacity: .3; }
+
+/* AD-04 미리보기 */
+.a-scroll { overflow-x: auto; }
+.a-table.preview td, .a-table.preview th { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.a-table.preview td.missing { background: var(--err-bg); box-shadow: inset 0 0 0 1px #f2b8ad; }
