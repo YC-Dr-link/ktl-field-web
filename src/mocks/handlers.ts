@@ -7,8 +7,8 @@
  *   PIN: 시험자A 1234 · 시험자B 5678 · 시험자C는 처음부터 잠김. 5회 틀리면 10분 잠김
  */
 import { delay, http, HttpResponse } from "msw";
-import type { CaseList, CategoryList, Client, Me, TesterList } from "@/api/client";
-import { cases, categories, PINS, testers } from "./data";
+import type { Case, CaseList, CategoryList, CaseSummary, Client, Me, TesterList } from "@/api/client";
+import { caseDetail, cases, categories, PINS, testers } from "./data";
 import { load, save } from "./state";
 
 const BASES = ["/api/v1", "/api/admin/v1"];
@@ -94,7 +94,32 @@ export const handlers = [
     const url = new URL(request.url);
     const status = url.searchParams.get("status");
     const q = url.searchParams.get("q") ?? "";
-    const items = cases.filter((c) => (!status || c.status === status) && (!q || c.receipt_no?.includes(q)));
+    const all: CaseSummary[] = [...load().created, ...cases];
+    const items = all.filter((c) => (!status || c.status === status) && (!q || c.receipt_no?.includes(q)));
     return HttpResponse.json<CaseList>({ items, next_cursor: null });
+  })),
+
+  http.post("/api/v1/cases", async ({ request }) => {
+    const g = guard();
+    if (g) return g;
+    await delay(300);
+    const b = (await request.json()) as { receipt_no?: string; category?: string; unit_count?: number; options?: Record<string, string> };
+    if (!/^\d{2}-\d{6}-\d{2}$/.test(b.receipt_no ?? "")) return fail(400, "VALIDATION", "접수번호 형식은 26-000123-01 입니다", { fields: { receipt_no: "형식" } });
+    const cat = categories.find((c) => c.category === b.category);
+    if (!cat) return fail(400, "VALIDATION", "분류를 골라 주세요.");
+    const n = Math.min(50, Math.max(1, b.unit_count ?? 1));
+    const s = load();
+    const c = { id: `case_${100 + s.created.length}`, receipt_no: b.receipt_no, category: b.category, unit_count: n, status: "open" as const,
+      progress: { total: n * (cat.items?.length ?? 0), confirmed: 0, needs_check: 0 }, updated_at: new Date().toISOString(), options: b.options ?? {} };
+    save({ ...s, created: [c, ...s.created] });
+    return HttpResponse.json<Case>(caseDetail(c, c.options), { status: 201 });
+  }),
+
+  ...both("/cases/:id").map((p) => http.get(p, async ({ params }) => {
+    await delay(200);
+    const s = load();
+    const c = s.created.find((x) => x.id === params.id) ?? cases.find((x) => x.id === params.id);
+    if (!c) return fail(404, "NOT_FOUND", "접수 건을 찾지 못했습니다.");
+    return HttpResponse.json<Case>(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {}));
   })),
 ];

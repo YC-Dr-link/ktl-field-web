@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, CaseList as CaseListRes, CaseSummary, CategoryList } from "@/api/client";
+import { go } from "./router";
 
 /** MO-03 접수 건 목록: 진행 중 건이 위, 완료 건은 아래 흐리게. 카드에 진행률 · 확인 필요 수 (03 시나리오 B-3) */
 export default function CaseList() {
@@ -41,7 +42,8 @@ export default function CaseList() {
         const done = c.status === "completed";
         const p = c.progress ?? {};
         return (
-          <li key={c.id} className={`card case${done ? " done" : ""}`}>
+          <li key={c.id} className={`card case${done ? " done" : ""}`} role="button" tabIndex={0}
+            onClick={() => go(`/cases/${encodeURIComponent(c.id ?? "")}`)} onKeyDown={(e) => e.key === "Enter" && go(`/cases/${encodeURIComponent(c.id ?? "")}`)}>
             <div className="case-top">
               <b className="case-no">{c.receipt_no}</b>
               <span className="muted">{labels[c.category ?? ""] ?? c.category}</span>

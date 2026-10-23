@@ -40,3 +40,25 @@
 .who summary { list-style: none; cursor: pointer; font-size: 18px; padding: 6px 0; }
 .who summary::-webkit-details-marker { display: none; }
 .who-menu { position: absolute; left: 0; top: 40px; z-index: 10; display: flex; flex-direction: column; gap: 8px; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+
+/* MO-03 새 건 · MO-04 분류 */
+.case { cursor: pointer; }
+.case:active { background: #eef4fd; }
+.receipt { height: 60px; display: grid; place-items: center; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .04em; background: var(--surface); border: 2px solid var(--accent); border-radius: 12px; color: var(--ink); }
+.receipt.empty { color: #c3c8d0; border-color: var(--line); }
+.field-msg { min-height: 20px; font-weight: 500; font-size: 14px; }
+.stepper { display: grid; grid-template-columns: 72px 1fr 72px; align-items: center; text-align: center; gap: 8px; font-size: 24px; }
+.cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn.cat { min-height: 88px; font-size: 24px; }
+.btn.cat.on, .btn.choice.on { background: #e8f1fc; border-color: var(--accent); color: var(--accent); }
+.choice-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.choice { min-height: 52px; font-size: 18px; }
+
+/* 접수 건 — 촬영 항목 */
+.unit-nav { display: flex; }
+.check-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.check-item { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 10px 14px; }
+.check-item .grow { flex: 1; font-size: 17px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--muted); flex: none; }
+.dot.on { background: var(--ink-2); border-color: var(--ink-2); }
+.req { color: var(--err); margin-left: 2px; }
