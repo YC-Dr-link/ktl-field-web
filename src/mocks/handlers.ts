@@ -5,10 +5,12 @@
  * 시험용 값 (전부 가짜)
  *   등록 코드: 483920 = 성공 · 000000 = 만료(410) · 그 밖 = 틀림(400)
  *   PIN: 시험자A 1234 · 시험자B 5678 · 시험자C는 처음부터 잠김. 5회 틀리면 10분 잠김
+ *   ?mock=flaky : 사진 업로드의 20%를 일부러 끊는다 (재시도 확인용)
  */
 import { delay, http, HttpResponse } from "msw";
-import type { Case, CaseList, CategoryList, CaseSummary, Client, Me, TesterList } from "@/api/client";
+import type { Case, CaseList, CategoryList, CaseSummary, Client, Me, Photo, TesterList } from "@/api/client";
 import { caseDetail, cases, categories, PINS, testers } from "./data";
+import { addPhoto, itemStatus, onEvent, photos } from "./photos";
 import { load, save } from "./state";
 
 const BASES = ["/api/v1", "/api/admin/v1"];
@@ -120,6 +122,78 @@ export const handlers = [
     const s = load();
     const c = s.created.find((x) => x.id === params.id) ?? cases.find((x) => x.id === params.id);
     if (!c) return fail(404, "NOT_FOUND", "접수 건을 찾지 못했습니다.");
-    return HttpResponse.json<Case>(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {}));
+    return HttpResponse.json<Case>(withPhotos(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {})));
+  })),
+
+  http.post("/api/v1/cases/:id/photos", async ({ request, params }) => {
+    const g = guard();
+    if (g) return g;
+    if (flaky() && Math.random() < 0.2) return HttpResponse.error();   // 연결 끊김 흉내
+    const fd = await request.formData();
+    const uid = String(fd.get("client_upload_id") ?? "");
+    const dup = [...photos.values()].find((x) => (x as { uid?: string }).uid === uid);
+    if (dup) return fail(409, "DUPLICATE_UPLOAD", "이미 받은 사진입니다.", { photo: dup });
+    const s = load();
+    const c = s.created.find((x) => x.id === params.id) ?? cases.find((x) => x.id === params.id);
+    if (!c) return fail(404, "NOT_FOUND", "접수 건을 찾지 못했습니다.");
+    const file = fd.get("file");
+    if (file instanceof Blob && file.size > 20 * 1024 * 1024) return fail(413, "FILE_TOO_LARGE", "사진이 20 MB를 넘습니다.");
+    const p = addPhoto(String(params.id), c.category ?? "", Number(fd.get("unit_index")), String(fd.get("item_key")), file instanceof Blob ? file : new Blob());
+    Object.assign(p, { uid });
+    const { blob: _b, ...out } = p as Photo & { blob?: Blob };
+    void _b;
+    return HttpResponse.json<Photo>(out, { status: 202 });
+  }),
+
+  ...both("/photos/:id").map((p) => http.get(p, ({ params }) => {
+    const ph = photos.get(String(params.id));
+    if (!ph) return fail(404, "NOT_FOUND", "사진을 찾지 못했습니다.");
+    const { blob: _b, ...out } = ph;
+    void _b;
+    return HttpResponse.json<Photo>(out);
+  })),
+
+  ...both("/photos/:id/image").map((p) => http.get(p, ({ params }) => {
+    const ph = photos.get(String(params.id));
+    if (!ph?.blob) return fail(404, "NOT_FOUND", "사진을 찾지 못했습니다.");
+    return new HttpResponse(ph.blob, { headers: { "Content-Type": ph.blob.type || "image/jpeg" } });
+  })),
+
+  ...both("/events").map((p) => http.get(p, () => {
+    // SSE 흉내: 판독 상태가 바뀔 때마다 "event: 이름 / data: JSON / 빈 줄"
+    const enc = new TextEncoder();
+    let off = () => {};
+    const stream = new ReadableStream({
+      start(ctl) {
+        ctl.enqueue(enc.encode(": connected\n\n"));
+        off = onEvent((name, data) => ctl.enqueue(enc.encode(`event: ${name}\ndata: ${JSON.stringify(data)}\n\n`)));
+      },
+      cancel() {
+        off();
+      },
+    });
+    return new HttpResponse(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache" } });
   })),
 ];
+
+function flaky() {
+  try {
+    return new URLSearchParams(location.search).get("mock") === "flaky" || sessionStorage.getItem("ktl_mock_flaky") === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** 업로드한 사진의 판독 상태를 접수 건 항목에 덮어쓴다 */
+function withPhotos(c: Case): Case {
+  return {
+    ...c,
+    units: c.units?.map((u) => ({
+      ...u,
+      items: u.items?.map((it) => {
+        const st = itemStatus(c.id ?? "", u.index ?? 0, it.key ?? "");
+        return st ? { ...it, status: st.status as NonNullable<typeof it.status>, photo_id: st.photo_id } : it;
+      }),
+    })),
+  };
+}
