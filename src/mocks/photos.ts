@@ -22,6 +22,11 @@ function emit(name: EventName, data: ServerEvent) {
   listeners.forEach((l) => l(name, data));
 }
 
+/** 값이 바뀌었다 (확정 · 수정) — 화면은 GET /photos/{id}로 다시 받는다 */
+export function emitValues(photoId: string, caseId: string) {
+  emit("photo.values", { photo_id: photoId, case_id: caseId });
+}
+
 const v = (key: string, label: string, value: string, unit: string | null, confidence: number, bbox: number[]): Value =>
   ({ key, label, value, unit, confidence, bbox, status: confidence < 0.8 ? "needs_check" : "auto", confirmed_by: null, confirmed_at: null });
 
