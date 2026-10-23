@@ -4,3 +4,14 @@
   padding: calc(12px + env(safe-area-inset-top)) 16px 12px; background: var(--surface); border-bottom: 1px solid var(--line); font-size: 18px; }
 .m-body { flex: 1; padding: 14px 14px calc(24px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; }
 .m-body p { margin: 6px 0 0; }
+
+/* MO-03 접수 건 목록 */
+.case-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.case { display: flex; flex-direction: column; gap: 6px; }
+.case.done { opacity: .55; }
+.case-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.case-no { font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+.case-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--ink-2); }
+.err-box { border-color: var(--err); background: var(--err-bg); color: var(--err); display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.err-box p { margin: 0; }
+.loading { text-align: center; padding: 28px 16px; }
