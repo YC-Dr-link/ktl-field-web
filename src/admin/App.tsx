@@ -1,15 +1,17 @@
-import { CSSProperties, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { Brand } from "@/shared/brand/Logo";
 import Icon, { IconName } from "@/shared/Icon";
-import { EmptyArt } from "@/shared/motion";
 import Devices from "./Devices";
 import ExportScreen from "./Export";
+import Gas from "./Gas";
+import Radon from "./Radon";
+import Review from "./Review";
 
-/** 노트북 관리 화면 (AD-01~05). AD-04 · AD-05는 #7, AD-01은 #8, AD-02 · 03(S)은 #9 · #10에서. */
+/** 노트북 관리 화면 (AD-01~05). AD-01 #8 · AD-02 #9 · AD-03 #10 · AD-04 · 05 #7 */
 const SCREENS: readonly { id: string; label: string; icon: IconName; desc: string }[] = [
   { id: "AD-01", label: "접수 건 · 확인 필요", icon: "inbox", desc: "휴대폰에서 올라온 값 중 확인이 필요한 것을 노트북에서 정리해요." },
-  { id: "AD-02", label: "가스 구간 선택", icon: "wave", desc: "가스 측정 기록에서 쓸 구간을 골라요." },
-  { id: "AD-03", label: "라돈 병합", icon: "merge", desc: "라돈 측정 결과를 접수 건과 합쳐요." },
+  { id: "AD-02", label: "가스 구간 선택", icon: "wave", desc: "GL240 로거 그래프에서 13개 항목의 안정 구간을 끌어서 골라요." },
+  { id: "AD-03", label: "라돈 병합", icon: "merge", desc: "챔버 기준기와 시험품 파일을 맞춰 붙이고 지시오차 · 반복성을 미리 봐요." },
   { id: "AD-04", label: "내보내기", icon: "download", desc: "확정된 값만 CSV · TXT · Excel 파일로 내보내요." },
   { id: "AD-05", label: "단말 · 시험자 관리", icon: "devices", desc: "휴대폰 등록 · 해제, 시험자 PIN, 판독 설정을 관리해요." },
 ];
@@ -17,7 +19,13 @@ const SCREENS: readonly { id: string; label: string; icon: IconName; desc: strin
 const today = new Date().toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
 
 export default function App() {
-  const [cur, setCur] = useState<string>(() => (SCREENS.some((s) => `#${s.id}` === location.hash) ? location.hash.slice(1) : "AD-04"));
+  const [cur, setCur] = useState<string>(() => (SCREENS.some((s) => `#${s.id}` === location.hash) ? location.hash.slice(1) : "AD-01"));
+  // 다른 화면에서 location.hash = "#AD-02" 처럼 넘어올 수 있게
+  useEffect(() => {
+    const on = () => { const id = location.hash.slice(1); if (SCREENS.some((s) => s.id === id)) setCur(id); };
+    window.addEventListener("hashchange", on);
+    return () => window.removeEventListener("hashchange", on);
+  }, []);
   const screen = SCREENS.find((s) => s.id === cur)!;
   const idx = SCREENS.indexOf(screen);
   const open = (id: string) => {
@@ -57,18 +65,7 @@ export default function App() {
           </div>
         </header>
         <div key={cur} className="a-content enter">
-          {cur === "AD-04" ? <ExportScreen /> : cur === "AD-05" ? <Devices /> : (
-            <section className="card a-empty">
-              <EmptyArt kind="build" />
-              <span className="badge brand"><Icon name="sparkle" size={14} />준비 중</span>
-              <h2>{screen.label}</h2>
-              <p className="muted">{screen.id} 화면은 다음 작업에서 채워요. 지금은 <b>내보내기</b>와 <b>단말 · 시험자 관리</b>를 쓸 수 있어요.</p>
-              <div className="a-actions">
-                <button className="btn" onClick={() => open("AD-04")}><Icon name="download" size={18} />내보내기</button>
-                <button className="btn" onClick={() => open("AD-05")}><Icon name="devices" size={18} />단말 · 시험자 관리</button>
-              </div>
-            </section>
-          )}
+          {cur === "AD-01" ? <Review /> : cur === "AD-02" ? <Gas /> : cur === "AD-03" ? <Radon /> : cur === "AD-04" ? <ExportScreen /> : <Devices />}
         </div>
       </main>
     </div>

@@ -36,6 +36,22 @@ const P = {
   x: <><path d="M6 6l12 12" /><path d="M18 6L6 18" /></>,
   back: <><path d="M9 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-6-6z" /><path d="M11.5 9.5l5 5" /><path d="M16.5 9.5l-5 5" /></>,
   shield: <><path d="M12 3.5l7 2.8v5.2c0 4.3-3 7.6-7 9-4-1.4-7-4.7-7-9V6.3z" /><path d="M8.8 12l2.2 2.2 4.2-4.4" /></>,
+  search: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /></>,
+  calendar: <><rect x="4" y="5.5" width="16" height="14.5" rx="2.5" /><path d="M4 10h16" /><path d="M8.5 3.5v4" /><path d="M15.5 3.5v4" /></>,
+  keyboard: <><rect x="3" y="6" width="18" height="12" rx="2.5" /><path d="M7 10h.01M10 10h.01M13 10h.01M16 10h.01M7 14h10" /></>,
+  edit: <><path d="M4.5 19.5l1-4.2L15.8 5a2 2 0 0 1 2.9 0l.3.3a2 2 0 0 1 0 2.9L8.7 18.5z" /><path d="M13.5 7.3l3.2 3.2" /></>,
+  eye: <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /></>,
+  zoomIn: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /><path d="M11 8.5v5M8.5 11h5" /></>,
+  zoomOut: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4 4" /><path d="M8.5 11h5" /></>,
+  chart: <><path d="M4 4v16h16" /><path d="M7.5 15l3.5-4.5 3 2.5 5-6.5" /></>,
+  target: <><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r=".8" /></>,
+  trash: <><path d="M4.5 7h15" /><path d="M9.5 7V5h5v2" /><path d="M6.5 7l1 12.5h9l1-12.5" /><path d="M10 11v5M14 11v5" /></>,
+  info: <><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5" /><path d="M12 8h.01" /></>,
+  play: <path d="M8 5.5v13l10.5-6.5z" />,
+  layers: <><path d="M12 4l8.5 4.5L12 13 3.5 8.5z" /><path d="M3.5 12.5L12 17l8.5-4.5" /><path d="M3.5 16.5L12 21l8.5-4.5" /></>,
+  filter: <path d="M4 5.5h16l-6.2 7.3v5.4l-3.6 1.8v-7.2z" />,
+  checkAll: <><path d="M2.5 12.5l4 4L15 8" /><path d="M11 16l1 .5L21.5 7.5" /></>,
+  clockAlt: <><circle cx="12" cy="12" r="8" /><path d="M12 7.5V12h4" /><path d="M3 5l2.5-2" /><path d="M21 5l-2.5-2" /></>,
 } satisfies Record<string, React.ReactNode>;
 
 export type IconName = keyof typeof P;
