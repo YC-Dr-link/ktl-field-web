@@ -82,8 +82,8 @@
 .hint { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--brand-50); border: 1px dashed rgba(26, 115, 209, .35); color: var(--brand-700); font-size: 14px; line-height: 1.5; }
 .hint .ico { flex: none; margin-top: 1px; }
 .ok-box { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 36px 20px; text-align: center; border-radius: 20px; box-shadow: var(--shadow-lg); }
-.ok-box b { font-size: 21px; color: var(--ok); animation: enter .3s .5s var(--ease) both; }
-.ok-box span { color: var(--muted); animation: enter .3s .6s var(--ease) both; }
+.ok-box b { font-size: 21px; color: var(--ok); animation: enter .3s .25s var(--ease) both; }
+.ok-box span { color: var(--muted); animation: enter .3s .35s var(--ease) both; }
 
 /* ── MO-02 시험자 · PIN ── */
 .tester-list { display: grid; gap: 10px; }
@@ -195,7 +195,7 @@
 .unit-tabs::-webkit-scrollbar { display: none; }
 .unit-tab { flex: none; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); font: inherit; font-weight: 700; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s, transform .12s var(--ease); }
 .unit-tab:active { transform: scale(.96); }
-.unit-tab.on { background: var(--brand-600); border-color: var(--brand-600); color: #fff; box-shadow: 0 4px 12px rgba(18, 96, 181, .3); }
+.unit-tab.on { background: var(--brand-600); border-color: var(--brand-600); color: #fff; box-shadow: 0 3px 6px rgba(18, 96, 181, .28); }
 .check-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .check-item { position: relative; display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 10px 14px 10px 10px; cursor: pointer; overflow: hidden;
   transition: transform .12s var(--ease), border-color .2s, background-color .2s; }
