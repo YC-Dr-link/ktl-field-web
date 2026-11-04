@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { api, API_BASE, ApiError, CaseList, CaseSummary, Schemas } from "@/api/client";
+import Icon from "@/shared/Icon";
+import { EmptyArt, stagger } from "@/shared/motion";
 
 type Export = Schemas["Export"];
 const FORMATS = [["csv", "CSV"], ["txt", "TXT (탭)"], ["xlsx", "Excel"]] as const;
@@ -55,7 +57,8 @@ export default function ExportScreen() {
   const done = ex?.status === "done";
   return (
     <div className="a-stack">
-      <section className="card">
+      <section className="card" style={stagger(0)}>
+        <div className="a-head"><h2><span className="ico-tile"><Icon name="file" size={18} /></span>무엇을 내보낼까요</h2><span className="muted">확정된 값만 나가요</span></div>
         <div className="a-form">
           <label>접수 건
             <select value={caseId} onChange={(e) => { setCaseId(e.target.value); setEx(null); }}>
@@ -72,17 +75,27 @@ export default function ExportScreen() {
           <label className="check"><input type="checkbox" checked={photos} onChange={(e) => setPhotos(e.target.checked)} /> 사진 묶음 포함 (zip — 워터마크 사본)</label>
         </div>
         <div className="a-actions">
-          <button className="btn primary" disabled={!caseId || busy} onClick={preview}>{busy ? (ex?.status === "running" ? "만드는 중…" : "준비 중…") : "미리보기"}</button>
-          {done && ex?.id && <a className="btn primary" href={`${API_BASE}/exports/${encodeURIComponent(ex.id)}/download`} download={ex.file_name ?? undefined}>⬇ 파일 받기</a>}
+          <button className="btn primary" disabled={!caseId || busy} onClick={preview}><Icon name="table" size={18} />{busy ? (ex?.status === "running" ? "만드는 중…" : "준비 중…") : "미리보기"}</button>
+          {done && ex?.id && <a className="btn primary" href={`${API_BASE}/exports/${encodeURIComponent(ex.id)}/download`} download={ex.file_name ?? undefined}><Icon name="download" size={18} />파일 받기</a>}
         </div>
-        {err && <div className="card err-box" role="alert">{err}</div>}
+        {busy && <div className="export-busy" role="progressbar" aria-label="내보내기 만드는 중" />}
+        {err && <div className="card err-box" role="alert"><Icon name="alert" size={20} />{err}</div>}
       </section>
+
+      {!done && !busy && (
+        <section className="card" style={stagger(1)}>
+          <div className="a-hint">
+            <EmptyArt kind="table" />
+            <div><b>{caseId ? "[미리보기]를 누르면 표가 여기에 나와요" : "접수 건을 먼저 고르세요"}</b><span>기기 1대가 1행이에요. 미확정 칸은 빨간 빈칸으로 보여요.</span></div>
+          </div>
+        </section>
+      )}
 
       {done && ex?.preview && (
         <section className="card">
           <div className="a-head">
-            <h2>미리보기 <span className="muted">{cur?.receipt_no} · 기기 1대 = 1행</span></h2>
-            {!!ex.skipped_unconfirmed && <span className="badge err">미확정 {ex.skipped_unconfirmed}개 제외</span>}
+            <h2><span className="ico-tile"><Icon name="table" size={18} /></span>미리보기 <span className="muted">{cur?.receipt_no} · 기기 1대 = 1행</span></h2>
+            {!!ex.skipped_unconfirmed && <span className="badge err"><Icon name="alert" size={13} stroke={2.4} />미확정 {ex.skipped_unconfirmed}개 제외</span>}
           </div>
           <div className="a-scroll">
             <table className="a-table preview">
@@ -94,7 +107,7 @@ export default function ExportScreen() {
               </tbody>
             </table>
           </div>
-          <p className="muted small">파일 이름: {ex.file_name} · 업무 PC로 옮기는 방법은 KTL 규정을 따르세요 (확인 필요)</p>
+          <p className="muted small file-line"><Icon name="file" size={16} />파일 이름: {ex.file_name} · 업무 PC로 옮기는 방법은 KTL 규정을 따르세요 (확인 필요)</p>
         </section>
       )}
     </div>
