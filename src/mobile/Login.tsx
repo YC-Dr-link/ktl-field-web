@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, Tester, TesterList } from "@/api/client";
 import Keypad, { applyKey } from "@/shared/Keypad";
+import Icon from "@/shared/Icon";
+import { Skeleton, stagger } from "@/shared/motion";
+import { Hero, TopBar } from "./Chrome";
 
 /** MO-02 시험자 + PIN. 틀리면 남은 횟수, 5회면 잠김 — 문구는 서버가 준 그대로 (03 시나리오 B-2) */
 export default function Login({ onDone }: { onDone: () => void }) {
@@ -10,6 +13,7 @@ export default function Login({ onDone }: { onDone: () => void }) {
   const [err, setErr] = useState<string | null>(null);
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [shake, setShake] = useState(0);   // 틀릴 때마다 점이 흔들리게 (모양만)
 
   useEffect(() => {
     api<TesterList>("/testers").then((r) => setTesters((r.items ?? []).filter((t) => t.active !== false))).catch((e: ApiError) => setErr(e.message));
@@ -33,6 +37,7 @@ export default function Login({ onDone }: { onDone: () => void }) {
       setErr(ae?.message ?? String(e));
       setLocked(ae?.code === "PIN_LOCKED");
       setPin("");
+      setShake((n) => n + 1);
     } finally {
       setBusy(false);
     }
@@ -41,14 +46,19 @@ export default function Login({ onDone }: { onDone: () => void }) {
   if (!who)
     return (
       <div className="m-screen">
-        <header className="m-bar"><b>시험자 선택</b></header>
+        <Hero>
+          <h2>시험자 선택</h2>
+          <p>본인 이름을 누르고 PIN을 입력하세요</p>
+        </Hero>
         <main className="m-body">
-          {err && <div className="card err-box" role="alert">{err}</div>}
-          {!testers && !err && <div className="card muted loading">불러오는 중…</div>}
-          <div className="tester-list">
-            {testers?.map((t) => (
-              <button key={t.id} className="btn tester" onClick={() => pick(t)}>
-                {t.name}{t.locked && <span className="badge err">잠김</span>}
+          {err && <div className="card err-box" role="alert"><div className="err-row"><Icon name="alert" />{err}</div></div>}
+          {!testers && !err && <Skeleton rows={3} />}
+          <div className="tester-list stagger">
+            {testers?.map((t, i) => (
+              <button key={t.id} className={`tester${t.locked ? " locked" : ""}`} style={stagger(i)} onClick={() => pick(t)}>
+                <span className="avatar">{t.locked ? <Icon name="lock" size={20} /> : <Icon name="user" size={22} />}</span>
+                <span className="name">{t.name}</span>
+                {t.locked ? <span className="badge err"><Icon name="lock" size={14} />잠김</span> : <Icon name="right" className="go" />}
               </button>
             ))}
           </div>
@@ -58,12 +68,13 @@ export default function Login({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="m-screen">
-      <header className="m-bar">
-        <button className="btn ghost" onClick={() => setWho(null)}>‹ 다른 사람</button>
-        <b>{who.name}</b>
-      </header>
+      <TopBar onBack={() => setWho(null)} backLabel="다른 사람" title={who.name} sub="PIN 확인" />
       <main className="m-body pin-body">
-        <div className="pin-dots" aria-label={`PIN ${pin.length}자리 입력됨`}>
+        <div className="pin-head">
+          <span className="avatar lg"><Icon name={locked ? "lock" : "user"} size={32} /></span>
+          <b>{who.name}</b>
+        </div>
+        <div key={shake} className={`pin-dots${shake ? " shake" : ""}${err ? " err" : ""}`} aria-label={`PIN ${pin.length}자리 입력됨`}>
           {Array.from({ length: Math.max(4, pin.length) }, (_, i) => <span key={i} className={i < pin.length ? "on" : ""} />)}
         </div>
         <div className="pin-msg" role="alert">{err ? <span className="err-text">{err}</span> : "PIN을 입력하세요"}</div>
