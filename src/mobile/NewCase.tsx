@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, Case, Category, CategoryList } from "@/api/client";
 import Keypad, { applyKey } from "@/shared/Keypad";
+import Icon from "@/shared/Icon";
+import { Skeleton, stagger } from "@/shared/motion";
+import { CAT_ICON } from "./CaseList";
+import { TopBar } from "./Chrome";
 import { go } from "./router";
 
 /** 숫자만 받아 NN-NNNNNN-NN 모양으로 (`-` 자동) */
@@ -57,23 +61,23 @@ export default function NewCase() {
   if (step === 1)
     return (
       <div className="m-screen">
-        <header className="m-bar">
-          <button className="btn ghost" onClick={() => history.back()}>‹ 목록</button>
-          <b>새 건</b>
-          <span />
-        </header>
+        <TopBar onBack={() => history.back()} backLabel="목록" title="새 건" sub="접수번호 · 기기 대수" right={<span className="step-pill">1 / 2</span>} />
         <main className="m-body">
+          <div className="steps" aria-hidden="true"><i className="on" /><i /></div>
           <div className="field">
             <span>접수번호</span>
-            <div className={`receipt${receipt ? "" : " empty"}`}>{receipt || "26-000123-01"}</div>
+            <div className={`receipt${receipt ? "" : " empty"}${receiptOk ? " full" : ""}`}>
+              {receipt || "26-000123-01"}{receipt && !receiptOk && <span className="caret" aria-hidden="true" />}
+              {receiptOk && <Icon name="check" size={26} stroke={3} className="ok-mark" />}
+            </div>
             <span className="field-msg">{receipt && !receiptOk ? <span className="err-text">접수번호 형식은 26-000123-01 입니다</span> : " "}</span>
           </div>
           <Keypad onKey={(k) => setDigits((d) => applyKey(d, k, 10))} />
           <div className="field">
             <span>기기 대수</span>
-            <div className="stepper">
+            <div className="stepper card">
               <button className="btn key" onClick={() => setUnits((u) => Math.max(1, u - 1))} aria-label="한 대 줄이기">−</button>
-              <b>{units}대</b>
+              <b key={units} className="enter">{units}<small>대</small></b>
               <button className="btn key" onClick={() => setUnits((u) => Math.min(MAX_UNITS, u + 1))} aria-label="한 대 늘리기">＋</button>
             </div>
           </div>
@@ -84,21 +88,25 @@ export default function NewCase() {
 
   return (
     <div className="m-screen">
-      <header className="m-bar">
-        <button className="btn ghost" onClick={() => setStep(1)}>‹ 접수번호</button>
-        <b>{receipt} · {units}대</b>
-        <span />
-      </header>
+      <TopBar onBack={() => setStep(1)} backLabel="접수번호" title={receipt} sub={`기기 ${units}대 · 분류 고르기`} right={<span className="step-pill">2 / 2</span>} />
       <main className="m-body">
-        <div className="muted">분류</div>
-        {!cats && !err && <div className="card muted loading">불러오는 중…</div>}
-        <div className="cat-grid">
-          {cats?.map((c) => (
-            <button key={c.category} className={`btn cat${cat?.category === c.category ? " on" : ""}`} onClick={() => pickCat(c)}>{c.label}</button>
-          ))}
+        <div className="steps" aria-hidden="true"><i className="on" /><i className="on" /></div>
+        <div className="section-label">분류</div>
+        {!cats && !err && <Skeleton rows={2} />}
+        <div className="cat-grid stagger">
+          {cats?.map((c, i) => {
+            const on = cat?.category === c.category;
+            return (
+              <button key={c.category} className={`cat${on ? " on" : ""}`} style={stagger(i)} onClick={() => pickCat(c)} aria-pressed={on}>
+                <span className="ico-tile"><Icon name={CAT_ICON[c.category ?? ""] ?? "file"} size={28} /></span>
+                <span><span className="cat-name">{c.label}</span><span className="cat-meta">촬영 {c.items?.length ?? 0}항목</span></span>
+                {on && <span className="tick"><Icon name="check" size={16} stroke={3} /></span>}
+              </button>
+            );
+          })}
         </div>
         {cat?.options?.map((o) => (
-          <div key={o.key} className="field">
+          <div key={o.key} className="field card opt-card enter">
             <span>{o.label}</span>
             <div className="choice-row">
               {o.choices?.map((ch) => (
@@ -107,7 +115,7 @@ export default function NewCase() {
             </div>
           </div>
         ))}
-        {err && <div className="card err-box" role="alert">{err}</div>}
+        {err && <div className="card err-box" role="alert"><div className="err-row"><Icon name="alert" />{err}</div></div>}
         <button className="btn primary big" disabled={!optsOk || busy} onClick={create}>{busy ? "만드는 중…" : "만들기"}</button>
       </main>
     </div>

@@ -24,7 +24,7 @@ export type TesterList = Get<"/testers">;
 export const API_BASE = import.meta.env.MODE === "admin" ? "/api/admin/v1" : "/api/v1";
 
 export class ApiError extends Error {
-  constructor(public status: number, public code: string, message: string) {
+  constructor(public status: number, public code: string, message: string, public detail?: Record<string, unknown>) {
     super(message);
   }
 }
@@ -44,7 +44,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       /* 본문 없음 */
     }
-    throw new ApiError(res.status, body?.error?.code ?? "INTERNAL", body?.error?.message ?? `요청 실패 (${res.status})`);
+    throw new ApiError(res.status, body?.error?.code ?? "INTERNAL", body?.error?.message ?? `요청 실패 (${res.status})`, body?.error?.detail);
   }
   return (res.status === 204 ? undefined : await res.json()) as T;
 }

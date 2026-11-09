@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, Client, Schemas, Tester, TesterList } from "@/api/client";
+import Icon from "@/shared/Icon";
+import { EmptyArt, stagger } from "@/shared/motion";
 
 type PairCode = { code?: string; expires_at?: string; qr_svg?: string };
 type Settings = Schemas["Settings"];
@@ -12,9 +14,11 @@ export default function Devices() {
   const say = (text: string, err = false) => setMsg({ text, err });
   return (
     <div className="a-stack">
-      {msg && <div className={`card ${msg.err ? "err-box" : "ok-line"}`} role="status">{msg.text}</div>}
-      <PairCodeCard onError={(m) => say(m, true)} />
-      <ClientsCard say={say} />
+      {msg && <div key={msg.text} className={`card enter ${msg.err ? "err-box" : "ok-line"}`} role="status"><Icon name={msg.err ? "alert" : "check"} size={20} />{msg.text}</div>}
+      <div className="a-grid">
+        <PairCodeCard onError={(m) => say(m, true)} />
+        <ClientsCard say={say} />
+      </div>
       <TestersCard say={say} />
       <SettingsCard say={say} />
     </div>
@@ -34,15 +38,16 @@ function PairCodeCard({ onError }: { onError: (m: string) => void }) {
   const issue = () => api<PairCode>("/pair-codes", json("POST")).then(setPc).catch((e: ApiError) => onError(e.message));
   const expired = !!pc && left === 0;
   return (
-    <section className="card">
-      <div className="a-head"><h2>단말 등록 코드</h2><button className="btn primary" onClick={issue}>{pc ? "새 코드 발급" : "등록 코드 발급"}</button></div>
-      {!pc && <p className="muted">휴대폰을 새로 쓸 때 발급하세요. 휴대폰 카메라로 QR을 찍으면 등록 화면이 열려요. 코드는 5분 동안만 쓸 수 있어요.</p>}
+    <section className="card" style={stagger(0)}>
+      <div className="a-head"><h2><span className="ico-tile"><Icon name="qr" size={18} /></span>단말 등록 코드</h2><button className="btn primary" onClick={issue}>{pc ? "새 코드 발급" : "등록 코드 발급"}</button></div>
+      {!pc && <div className="pair-empty"><EmptyArt kind="phone" /><p className="muted">휴대폰을 새로 쓸 때 발급하세요. 휴대폰 카메라로 QR을 찍으면 등록 화면이 열려요. 코드는 5분 동안만 쓸 수 있어요.</p></div>}
       {pc && (
         <div className={`pair${expired ? " expired" : ""}`}>
           {/* 서버(이 노트북)가 만든 QR SVG — 외부 내용 아님 */}
           <div className="pair-qr" dangerouslySetInnerHTML={{ __html: pc.qr_svg ?? "" }} aria-label="등록 QR" />
-          <div>
+          <div className="pair-left">
             <div className="pair-code">{pc.code?.replace(/(\d{3})(\d{3})/, "$1 $2")}</div>
+            <div className="pair-timer" aria-hidden="true"><i style={{ transform: `scaleX(${Math.min(1, left / 300)})` }} /></div>
             <div className={expired ? "err-text" : "muted"}>{expired ? "만료됐어요. 새 코드를 발급하세요." : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")} 뒤 만료`}</div>
           </div>
         </div>
@@ -67,14 +72,15 @@ function ClientsCard({ say }: { say: (t: string, e?: boolean) => void }) {
     }
   };
   return (
-    <section className="card">
-      <div className="a-head"><h2>등록된 단말</h2><span className="muted">분실한 휴대폰은 바로 해제하세요</span></div>
+    <section className="card" style={stagger(1)}>
+      <div className="a-head"><h2><span className="ico-tile"><Icon name="phone" size={18} /></span>등록된 단말</h2><span className="muted">분실한 휴대폰은 바로 해제하세요</span></div>
+      <div className="a-table-wrap">
       <table className="a-table">
         <thead><tr><th>이름</th><th>등록</th><th>마지막 접속</th><th /></tr></thead>
         <tbody>
           {items?.map((c) => (
             <tr key={c.client_id}>
-              <td><b>{c.device_name}</b></td><td>{fmt(c.paired_at)}</td><td>{fmt(c.last_seen_at)}</td>
+              <td><span className="who-cell"><span className="av"><Icon name="phone" size={16} /></span><b>{c.device_name}</b></span></td><td>{fmt(c.paired_at)}</td><td>{fmt(c.last_seen_at)}</td>
               <td className="right">
                 {ask === c.client_id
                   ? <><button className="btn danger" onClick={() => revoke(c)}>해제 확인</button> <button className="btn" onClick={() => setAsk(null)}>취소</button></>
@@ -82,9 +88,10 @@ function ClientsCard({ say }: { say: (t: string, e?: boolean) => void }) {
               </td>
             </tr>
           ))}
-          {items && !items.length && <tr><td colSpan={4} className="muted">등록된 단말이 없어요</td></tr>}
+          {items && !items.length && <tr><td colSpan={4} className="empty-cell">등록된 단말이 없어요</td></tr>}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }
@@ -122,8 +129,8 @@ function TestersCard({ say }: { say: (t: string, e?: boolean) => void }) {
   };
   const pinOk = /^\d{4,6}$/.test(pin);
   return (
-    <section className="card">
-      <div className="a-head"><h2>시험자</h2>{!adding && <button className="btn" onClick={() => { setAdding(true); setPinFor(null); setPin(""); }}>＋ 추가</button>}</div>
+    <section className="card" style={stagger(2)}>
+      <div className="a-head"><h2><span className="ico-tile"><Icon name="user" size={18} /></span>시험자 {items && <span className="muted">{items.length}명</span>}</h2>{!adding && <button className="btn" onClick={() => { setAdding(true); setPinFor(null); setPin(""); }}><Icon name="plus" size={18} />추가</button>}</div>
       {adding && (
         <div className="a-inline">
           <input placeholder="이름 (예: 시험자D)" value={name} onChange={(e) => setName(e.target.value)} />
@@ -132,12 +139,13 @@ function TestersCard({ say }: { say: (t: string, e?: boolean) => void }) {
           <button className="btn" onClick={() => setAdding(false)}>취소</button>
         </div>
       )}
+      <div className="a-table-wrap">
       <table className="a-table">
         <thead><tr><th>이름</th><th>상태</th><th /></tr></thead>
         <tbody>
           {items?.map((t) => (
             <tr key={t.id} className={t.active === false ? "dim" : ""}>
-              <td><b>{t.name}</b></td>
+              <td><span className="who-cell"><span className="av"><Icon name={t.locked ? "lock" : "user"} size={16} /></span><b>{t.name}</b></span></td>
               <td>{t.active === false ? <span className="badge">비활성</span> : t.locked ? <span className="badge err">잠김</span> : <span className="badge ok">사용 중</span>}</td>
               <td className="right">
                 {pinFor === t.id ? (
@@ -158,6 +166,7 @@ function TestersCard({ say }: { say: (t: string, e?: boolean) => void }) {
           ))}
         </tbody>
       </table>
+      </div>
     </section>
   );
 }
@@ -168,8 +177,8 @@ function SettingsCard({ say }: { say: (t: string, e?: boolean) => void }) {
   if (!s) return null;
   const save = () => api<Settings>("/settings", json("PUT", s)).then((r) => { setS(r); say("설정을 저장했어요."); }).catch((e: ApiError) => say(e.message, true));
   return (
-    <section className="card">
-      <div className="a-head"><h2>설정</h2><button className="btn primary" onClick={save}>저장</button></div>
+    <section className="card" style={stagger(3)}>
+      <div className="a-head"><h2><span className="ico-tile"><Icon name="settings" size={18} /></span>설정</h2><button className="btn primary" onClick={save}>저장</button></div>
       <div className="a-form">
         <label>출력 인코딩
           <select value={s.export_encoding} onChange={(e) => setS({ ...s, export_encoding: e.target.value as Settings["export_encoding"] })}>
