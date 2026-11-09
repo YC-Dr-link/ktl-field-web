@@ -67,12 +67,12 @@ export default function ExportScreen() {
             </select>
           </label>
           <label>형식
-            <span className="seg">{FORMATS.map(([k, l]) => <button key={k} type="button" className={format === k ? "on" : ""} onClick={() => setFormat(k)}>{l}</button>)}</span>
+            <span className="seg">{FORMATS.map(([k, l]) => <button key={k} type="button" className={format === k ? "on" : ""} disabled={busy} onClick={() => { setFormat(k); setEx(null); }}>{l}</button>)}</span>
           </label>
           <label>인코딩
-            <select value={encoding} onChange={(e) => setEncoding(e.target.value as "cp949" | "utf-8")}><option value="cp949">cp949 (엑셀 기본)</option><option value="utf-8">UTF-8</option></select>
+            <select value={encoding} disabled={busy} onChange={(e) => { setEncoding(e.target.value as "cp949" | "utf-8"); setEx(null); }}><option value="cp949">cp949 (엑셀 기본)</option><option value="utf-8">UTF-8</option></select>
           </label>
-          <label className="check"><input type="checkbox" checked={photos} onChange={(e) => setPhotos(e.target.checked)} /> 사진 묶음 포함 (zip — 워터마크 사본)</label>
+          <label className="check"><input type="checkbox" checked={photos} disabled={busy} onChange={(e) => { setPhotos(e.target.checked); setEx(null); }} /> 사진 묶음 포함 (zip — 워터마크 사본)</label>
         </div>
         <div className="a-actions">
           <button className="btn primary" disabled={!caseId || busy} onClick={preview}><Icon name="table" size={18} />{busy ? (ex?.status === "running" ? "만드는 중…" : "준비 중…") : "미리보기"}</button>
