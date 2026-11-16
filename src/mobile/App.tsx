@@ -7,6 +7,9 @@ import PhotoView from "./PhotoView";
 import { go, useRoute } from "./router";
 import Login from "./Login";
 import Pair from "./Pair";
+import { Hero } from "./Chrome";
+import { LogoMark } from "@/shared/brand/Logo";
+import Icon from "@/shared/Icon";
 
 type View = { name: "loading" } | { name: "pair"; notice?: string } | { name: "login" } | { name: "cases"; me: Me } | { name: "error"; message: string };
 
@@ -39,12 +42,20 @@ export default function App() {
 
   switch (view.name) {
     case "loading":
-      return <div className="m-screen"><main className="m-body"><div className="card muted loading">연결 중…</div></main></div>;
+      return (
+        <div className="m-screen">
+          <main className="m-body boot" role="status"><LogoMark size={72} spin /><span>연결 중…</span></main>
+        </div>
+      );
     case "error":
       return (
         <div className="m-screen">
+          <Hero />
           <main className="m-body">
-            <div className="card err-box" role="alert"><p>{view.message}</p><button className="btn" onClick={check}>다시 시도</button></div>
+            <div className="card err-box" role="alert">
+              <div className="err-row"><Icon name="wifiOff" /><p>{view.message}</p></div>
+              <button className="btn" onClick={check}><Icon name="refresh" size={18} />다시 시도</button>
+            </div>
           </main>
         </div>
       );
@@ -58,16 +69,23 @@ export default function App() {
       if (route.name === "photo") return <PhotoView id={route.id} />;
       return (
         <div className="m-screen">
-          <header className="m-bar">
+          <Hero right={
             <details className="who">
-              <summary><b>{view.me.tester?.name ?? "시험자"}</b> ▾</summary>
+              <summary><span className="avatar sm"><Icon name="user" size={18} /></span><b>{view.me.tester?.name ?? "시험자"}</b> ▾</summary>
               <div className="who-menu card">
-                <div className="muted small">{view.me.client?.device_name}</div>
-                <button className="btn" onClick={logout}>로그아웃 (다른 시험자)</button>
+                <div className="muted small dev"><Icon name="phone" size={16} />{view.me.client?.device_name}</div>
+                <button className="btn" onClick={logout}><Icon name="logout" size={18} />로그아웃 (다른 시험자)</button>
               </div>
             </details>
-            <button className="btn primary" onClick={() => go("/new")}>+ 새 건</button>
-          </header>
+          }>
+            <div className="hero-split">
+              <div>
+                <h2>접수 건</h2>
+                <p>건을 눌러 항목별로 사진을 찍으세요</p>
+              </div>
+              <button className="btn on-hero" onClick={() => go("/new")}><Icon name="plus" size={20} stroke={2.6} />새 건</button>
+            </div>
+          </Hero>
           <main className="m-body">
             <CaseList />
           </main>

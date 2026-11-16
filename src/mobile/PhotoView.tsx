@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { api, API_BASE, ApiError, Photo, Value } from "@/api/client";
 import { enqueue } from "@/api/upload";
+import Icon from "@/shared/Icon";
+import { CheckDraw, Skeleton, stagger } from "@/shared/motion";
+import { TopBar } from "./Chrome";
 import ZoomImage, { Box } from "./ZoomImage";
 
 const REASONS = ["OCR 오인식", "흐림", "기타"] as const;
@@ -16,14 +19,15 @@ export default function PhotoView({ id }: { id: string }) {
   const [edits, setEdits] = useState<Record<string, Edit>>({});     // 고친 칸
   const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);   // 확정 직후 체크 그림을 잠깐 보여 주고 MO-05로
   const camera = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     api<Photo>(`/photos/${encodeURIComponent(id)}`).then(setP).catch((e: ApiError) => setErr(e.message));
   }, [id]);
 
-  if (err) return <Shell><div className="card err-box" role="alert">{err}</div></Shell>;
-  if (!p) return <Shell><div className="card muted loading">불러오는 중…</div></Shell>;
+  if (err) return <Shell><div className="card err-box" role="alert"><div className="err-row"><Icon name="alert" />{err}</div></div></Shell>;
+  if (!p) return <Shell><div className="zoom" aria-hidden="true" /><Skeleton rows={2} /></Shell>;
 
   const values = p.values ?? [];
   const confirmed = values.length > 0 && values.every((v) => v.status === "confirmed" || v.status === "edited");
@@ -44,7 +48,8 @@ export default function PhotoView({ id }: { id: string }) {
     try {
       const body = { confirm: true, values: values.map((v) => (changed(v) ? { key: v.key, value: edits[v.key].value.trim(), reason: reasonOf(v) } : { key: v.key, value: v.value })) };
       await api<Photo>(`/photos/${encodeURIComponent(id)}/values`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-      history.back();   // MO-05로 — 줄에 ✓
+      setSaved(true);
+      setTimeout(() => history.back(), 750);   // MO-05로 — 줄에 ✓ (체크 그림이 그려진 뒤)
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : String(e));
     } finally {
@@ -64,24 +69,25 @@ export default function PhotoView({ id }: { id: string }) {
     <Shell>
       {pre && (
         <div className="warn-band" role="alert">
-          ⚠ {pre.message ?? "측정 전 화면(0.000)일 수 있습니다"}
-          <button className="btn small primary" onClick={() => camera.current?.click()}>다시 찍기</button>
+          <span><Icon name="alert" size={20} />{pre.message ?? "측정 전 화면(0.000)일 수 있습니다"}</span>
+          <button className="btn small primary" onClick={() => camera.current?.click()}><Icon name="camera" size={16} />다시 찍기</button>
         </div>
       )}
-      {others.map((w, i) => <div key={i} className="card note-box">{w.message}</div>)}
+      {others.map((w, i) => <div key={i} className="card note-box"><Icon name="alert" size={20} />{w.message}</div>)}
       <ZoomImage src={`${API_BASE}/photos/${encodeURIComponent(id)}/image?variant=rotated`} boxes={boxes} focus={focus} onClearFocus={() => setFocus(null)} />
 
-      <ul className="value-list">
-        {values.map((v) => {
+      <div className="section-label">읽은 값 <span>{values.length}개</span></div>
+      <ul className="value-list stagger">
+        {values.map((v, i) => {
           const ed = edits[v.key];
           const isChanged = changed(v);
           const yellow = v.status === "needs_check" && !handled(v);
           return (
-            <li key={v.key} className={`card value-row${yellow ? " yellow" : ""}${focus === v.key ? " focused" : ""}`} onClick={() => setFocus(v.key)}>
+            <li key={v.key} className={`card value-row${yellow ? " yellow" : ""}${focus === v.key ? " focused" : ""}`} style={stagger(i)} onClick={() => setFocus(v.key)}>
               <div className="value-top">
                 <span className="muted">{v.label}</span>
-                {isChanged ? <span className="badge">수정됨</span> : v.status === "needs_check" ? (ok[v.key] ? <span className="badge ok">✓ 맞음</span> : <span className="badge check">⚠ 확인 필요</span>)
-                  : v.status === "confirmed" || v.status === "edited" ? <span className="badge ok">✓ 확정</span> : <span className="badge">자동</span>}
+                {isChanged ? <span className="badge brand pop">수정됨</span> : v.status === "needs_check" ? (ok[v.key] ? <span className="badge ok pop"><Icon name="check" size={13} stroke={3} />맞음</span> : <span className="badge check"><Icon name="alert" size={13} stroke={2.4} />확인 필요</span>)
+                  : v.status === "confirmed" || v.status === "edited" ? <span className="badge ok"><Icon name="check" size={13} stroke={3} />확정</span> : <span className="badge">자동</span>}
               </div>
               {editing === v.key ? (
                 <div className="edit" onClick={(e) => e.stopPropagation()}>
@@ -100,11 +106,14 @@ export default function PhotoView({ id }: { id: string }) {
               ) : (
                 <>
                   <div className="value-big">{isChanged ? ed.value : v.value}{v.unit && <span className="unit"> {v.unit}</span>}</div>
-                  <div className="conf" title={`신뢰도 ${Math.round((v.confidence ?? 0) * 100)}%`}><i style={{ width: `${Math.round((v.confidence ?? 0) * 100)}%` }} className={(v.confidence ?? 0) < 0.8 ? "low" : ""} /></div>
+                  <div className="conf-row">
+                    <span className={`conf-badge${(v.confidence ?? 0) < 0.8 ? " low" : ""}`}>신뢰도 {Math.round((v.confidence ?? 0) * 100)}%</span>
+                    <div className="conf" title={`신뢰도 ${Math.round((v.confidence ?? 0) * 100)}%`}><i style={{ width: `${Math.round((v.confidence ?? 0) * 100)}%` }} className={(v.confidence ?? 0) < 0.8 ? "low" : ""} /></div>
+                  </div>
                   {!confirmed && (
                     <div className="value-actions" onClick={(e) => e.stopPropagation()}>
-                      {v.status === "needs_check" && !isChanged && !ok[v.key] && <button className="btn small" onClick={() => setOk((x) => ({ ...x, [v.key]: true }))}>맞음</button>}
-                      <button className="btn small" onClick={() => { setEditing(v.key); setFocus(v.key); }}>고치기</button>
+                      {v.status === "needs_check" && !isChanged && !ok[v.key] && <button className="btn small" onClick={() => setOk((x) => ({ ...x, [v.key]: true }))}><Icon name="check" size={18} stroke={2.6} />맞음</button>}
+                      <button className="btn small" onClick={() => { setEditing(v.key); setFocus(v.key); }}><Icon name="settings" size={18} />고치기</button>
                     </div>
                   )}
                 </>
@@ -112,16 +121,21 @@ export default function PhotoView({ id }: { id: string }) {
             </li>
           );
         })}
-        {!values.length && <li className="card muted">읽은 값이 없어요 (판독하지 않는 항목이거나 아직 읽는 중)</li>}
+        {!values.length && <li className="card muted empty"><Icon name="image" size={28} />읽은 값이 없어요 (판독하지 않는 항목이거나 아직 읽는 중)</li>}
       </ul>
 
-      {err && <div className="card err-box" role="alert">{err}</div>}
+      {err && <div className="card err-box" role="alert"><div className="err-row"><Icon name="alert" />{err}</div></div>}
       <div className="photo-actions">
-        <button className="btn" onClick={() => camera.current?.click()}>다시 찍기</button>
+        <button className="btn" onClick={() => camera.current?.click()}><Icon name="camera" size={20} />다시 찍기</button>
         {!confirmed && <button className="btn primary big" disabled={!canConfirm} onClick={confirm}>{busy ? "확정 중…" : left ? `확정 (확인 남음 ${left})` : "확정"}</button>}
-        {confirmed && <span className="badge ok">✓ 확정된 사진</span>}
+        {confirmed && <span className="badge ok"><Icon name="check" size={15} stroke={3} />확정된 사진</span>}
       </div>
       <input ref={camera} type="file" accept="image/*" capture="environment" hidden onChange={reshoot} />
+      {saved && (
+        <div className="done-overlay" role="status">
+          <div className="card ok-box"><CheckDraw size={84} /><b>확정했어요</b><span>체크리스트로 돌아가요</span></div>
+        </div>
+      )}
     </Shell>
   );
 }
@@ -129,7 +143,7 @@ export default function PhotoView({ id }: { id: string }) {
 function Shell({ title = "판독 결과", children }: { title?: string; children: React.ReactNode }) {
   return (
     <div className="m-screen">
-      <header className="m-bar"><button className="btn ghost" onClick={() => history.back()} aria-label="체크리스트로">‹</button><b>{title}</b><span /></header>
+      <TopBar onBack={() => history.back()} backAria="체크리스트로" title={title} sub="값을 확인하고 확정하세요" />
       <main className="m-body">{children}</main>
     </div>
   );

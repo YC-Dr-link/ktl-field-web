@@ -34,6 +34,7 @@ npm run build        # dist/mobile · dist/admin + 외부 주소 0건 검사
 ```
 
 서버(B-1) 완성 전에는 개발 서버가 **MSW 목업**(`src/mocks`, 가짜 데이터)으로 돌아요. 진짜 서버에 붙이려면 `VITE_MOCK=0 npm run dev`. 빌드 결과에는 목업이 들어가지 않아요.
+관리 화면 목업 시연: AD-01은 확인 필요 사진 9장이 미리 들어 있고(합성 그림 · 가짜 값), AD-02 · AD-03은 [견본 파일로 해 보기]로 가짜 로거 · 라돈 파일을 넣어요. 처음 상태로 돌리려면 주소 뒤에 `?mock=reset`.
 API 타입(`src/api/schema.d.ts`)은 OpenAPI에서 만든 것 — 명세가 바뀌면 `npm run gen:api` (직접 고치지 않기).
 
 휴대폰으로 개발 화면을 보려면 `npm run dev -- --host` (같은 Wi-Fi). 빌드 결과는 B-1 서버가 각 주소에서 정적 파일로 준다.

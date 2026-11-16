@@ -54,6 +54,23 @@ export const cases: CaseSummary[] = [
     progress: { total: 8, confirmed: 0, needs_check: 0 }, updated_at: ago(40) },
   { id: "case_10", receipt_no: "26-000120-03", category: "dust", unit_count: 1, status: "completed",
     progress: { total: 6, confirmed: 6, needs_check: 0 }, updated_at: ago(60 * 26) },
+  // ↓ 관리 화면(AD-01~03) 시연용 — 사진 · 값은 seed.ts가 만든다. 가스 · 라돈은 휴대폰 목록에 안 나온다 (phone: false)
+  { id: "case_14", receipt_no: "26-000125-01", category: "sampling", unit_count: 3, status: "open",
+    progress: { total: 24, confirmed: 0, needs_check: 0 }, updated_at: ago(12) },
+  { id: "case_15", receipt_no: "26-000126-01", category: "dust", unit_count: 2, status: "open",
+    progress: { total: 20, confirmed: 0, needs_check: 0 }, updated_at: ago(25) },
+  { id: "case_17", receipt_no: "26-000128-01", category: "dust", unit_count: 1, status: "open",
+    progress: { total: 10, confirmed: 0, needs_check: 0 }, updated_at: ago(95) },
+  { id: "case_16", receipt_no: "26-000127-02", category: "sampling", unit_count: 1, status: "completed",
+    progress: { total: 8, confirmed: 8, needs_check: 0 }, updated_at: ago(60 * 20) },
+  { id: "case_20", receipt_no: "26-000130-01", category: "gas", unit_count: 1, status: "open",
+    progress: { total: 0, confirmed: 0, needs_check: 0 }, updated_at: ago(50) },
+  { id: "case_21", receipt_no: "26-000131-01", category: "gas", unit_count: 1, status: "completed",
+    progress: { total: 0, confirmed: 0, needs_check: 0 }, updated_at: ago(60 * 74) },
+  { id: "case_30", receipt_no: "26-000140-01", category: "radon", unit_count: 3, status: "open",
+    progress: { total: 0, confirmed: 0, needs_check: 0 }, updated_at: ago(70) },
+  { id: "case_31", receipt_no: "26-000141-02", category: "radon", unit_count: 2, status: "completed",
+    progress: { total: 0, confirmed: 0, needs_check: 0 }, updated_at: ago(60 * 50) },
 ];
 
 /** 접수 건 상세 — 기기마다 그 분류의 촬영 항목. 목업은 상태를 몇 개 섞어 둔다 */

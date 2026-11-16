@@ -1,12 +1,14 @@
+import Icon from "./Icon";
+
 /** 큰 숫자 키패드 (PIN · 접수번호). 한 손으로 누르기 좋게 버튼 높이 64px. */
 export default function Keypad({ onKey, disabled }: { onKey: (k: string) => void; disabled?: boolean }) {
   const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "C", "0", "⌫"];
   return (
     <div className="keypad">
       {keys.map((k) => (
-        <button key={k} type="button" className="btn key" disabled={disabled} onClick={() => onKey(k)}
+        <button key={k} type="button" className={`btn key${k === "C" || k === "⌫" ? " fn" : ""}`} disabled={disabled} onClick={() => onKey(k)}
           aria-label={k === "⌫" ? "한 글자 지우기" : k === "C" ? "모두 지우기" : k}>
-          {k}
+          {k === "⌫" ? <Icon name="back" size={26} stroke={1.9} /> : k}
         </button>
       ))}
     </div>

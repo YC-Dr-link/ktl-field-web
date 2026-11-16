@@ -12,6 +12,8 @@ import type { Case, CaseList, CategoryList, CaseSummary, Client, Me, Photo, Sche
 import { caseDetail, cases, categories } from "./data";
 import { addPhoto, emitValues, itemStatus, onEvent, photos } from "./photos";
 import { isLocked, load, MockState, save } from "./state";
+import { dataFileHandlers, lastMerge } from "./datafiles";
+import { reviewHandlers } from "./review";
 
 const PHONE = "/api/v1";
 const ADMIN = "/api/admin/v1";
@@ -104,8 +106,11 @@ export const handlers = [
     const url = new URL(request.url);
     const status = url.searchParams.get("status");
     const q = url.searchParams.get("q") ?? "";
-    const all: CaseSummary[] = [...load().created, ...cases];
-    const items = all.filter((c) => (!status || c.status === status) && (!q || c.receipt_no?.includes(q)));
+    const admin = p.startsWith(ADMIN);
+    const phoneCats = new Set(categories.filter((c) => c.phone !== false).map((c) => c.category));
+    const all: CaseSummary[] = [...load().created, ...cases].map((c) => (admin ? liveSummary(c) : c));
+    // 가스 · 라돈(phone: false)은 휴대폰 목록에 안 나온다
+    const items = all.filter((c) => (admin || phoneCats.has(c.category)) && (!status || c.status === status) && (!q || c.receipt_no?.includes(q)));
     return HttpResponse.json<CaseList>({ items, next_cursor: null });
   })),
 
@@ -131,7 +136,8 @@ export const handlers = [
     await delay(200);
     const c = findCase(load(), String(params.id));
     if (!c) return fail(404, "NOT_FOUND", "접수 건을 찾지 못했습니다.");
-    return HttpResponse.json<Case>(withPhotos(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {})));
+    const d = withPhotos(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {}));
+    return HttpResponse.json<Case>(p.startsWith(ADMIN) ? adminView(d) : d);
   })),
 
   // ───────── 사진 ─────────
@@ -260,7 +266,7 @@ export const handlers = [
     const ex: Schemas["Export"] & { encoding?: string; include_photos?: boolean } = { id, case_id: c.id, kind: b.kind, format: b.format, status: "queued", file_name: null, preview: null, skipped_unconfirmed: 0, encoding: b.encoding, include_photos: b.include_photos };
     exports.set(id, ex);
     setTimeout(() => Object.assign(ex, { status: "running" }), 300);
-    setTimeout(() => Object.assign(ex, buildExport(c, b.format ?? "csv", !!b.include_photos)), 1200);
+    setTimeout(() => Object.assign(ex, b.kind === "merge_raw" ? buildMergeExport(c, b.format ?? "csv") : buildExport(c, b.format ?? "csv", !!b.include_photos)), 1200);
     return HttpResponse.json<Schemas["Export"]>(ex, { status: 202 });
   }),
 
@@ -268,6 +274,31 @@ export const handlers = [
     const ex = exports.get(String(params.id));
     return ex ? HttpResponse.json<Schemas["Export"]>(ex) : fail(404, "NOT_FOUND", "내보내기를 찾지 못했습니다.");
   }),
+
+  // 건 완료: 확정 안 된 칸이 있으면 409 + detail.unconfirmed (03 B-7 #4)
+  http.post(`${ADMIN}/cases/:id/complete`, async ({ params }) => {
+    await delay(350);
+    const c = findCase(load(), String(params.id));
+    if (!c) return fail(404, "NOT_FOUND", "접수 건을 찾지 못했습니다.");
+    const d = adminView(withPhotos(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {})));
+    const unconfirmed = (d.units ?? []).flatMap((u) => (u.items ?? []).filter((i) => i.required && i.status !== "confirmed")
+      .map((i) => ({ unit_index: u.index, item_key: i.key, label: i.label, status: i.status })));
+    if (unconfirmed.length) return fail(409, "VALIDATION", `확정되지 않은 칸이 ${unconfirmed.length}개 있어 완료할 수 없습니다.`, { unconfirmed });
+    Object.assign(c, { status: "completed", updated_at: new Date().toISOString() });
+    return HttpResponse.json<Case>({ ...d, status: "completed" });
+  }),
+
+  http.post(`${ADMIN}/cases/:id/reopen`, async ({ params, request }) => {
+    const b = (await request.json().catch(() => ({}))) as { reason?: string };
+    if (!b.reason?.trim()) return fail(400, "VALIDATION", "다시 여는 사유를 적어 주세요.");
+    const c = findCase(load(), String(params.id));
+    if (!c) return fail(404, "NOT_FOUND", "접수 건을 찾지 못했습니다.");
+    Object.assign(c, { status: "open", updated_at: new Date().toISOString() });
+    return HttpResponse.json<Case>(withPhotos(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {})));
+  }),
+
+  ...dataFileHandlers,
+  ...reviewHandlers,
 
   http.get(`${ADMIN}/exports/:id/download`, ({ params }) => {
     const ex = exports.get(String(params.id));
@@ -278,6 +309,14 @@ export const handlers = [
     return new HttpResponse("﻿" + lines.join("\r\n"), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${ex.file_name}"` } });
   }),
 ];
+
+/** 가스 · 라돈 병합 결과(merge_raw) — 마지막 병합 표 그대로 */
+function buildMergeExport(c: CaseSummary, format: string): Partial<Schemas["Export"]> {
+  const m = lastMerge(c.id ?? "");
+  if (!m?.table) return { status: "failed" };
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15).replace("T", "-");
+  return { status: "done", preview: { columns: m.table.columns ?? [], rows: m.table.rows ?? [] }, skipped_unconfirmed: 0, file_name: `${c.receipt_no}_${c.category}_merge_${stamp}.${format}` };
+}
 
 const exports = new Map<string, Schemas["Export"] & { encoding?: string; include_photos?: boolean }>();
 
@@ -328,8 +367,21 @@ function flaky() {
   }
 }
 
+/** 관리 화면 목록: 진행률을 항목 상태(사진 · 판독)에서 다시 센다 */
+export function liveSummary(c: CaseSummary): CaseSummary {
+  const d = adminView(withPhotos(caseDetail(c, (c as { options?: Record<string, string> }).options ?? {})));
+  const all = (d.units ?? []).flatMap((u) => u.items ?? []);
+  if (!all.length) return c;
+  return { ...c, progress: { total: all.length, confirmed: all.filter((i) => i.status === "confirmed").length, needs_check: all.filter((i) => i.status === "needs_check").length } };
+}
+
+/** 관리 화면: 사진 없이 상태만 흉내 낸 칸(휴대폰 시연용 case_12 1번 기기)은 빈 칸으로 보여 준다 */
+function adminView(c: Case): Case {
+  return { ...c, units: c.units?.map((u) => ({ ...u, items: u.items?.map((it) => (it.photo_id ? it : { ...it, status: "empty" as const })) })) };
+}
+
 /** 업로드한 사진의 판독 상태를 접수 건 항목에 덮어쓴다 */
-function withPhotos(c: Case): Case {
+export function withPhotos(c: Case): Case {
   return {
     ...c,
     units: c.units?.map((u) => ({
